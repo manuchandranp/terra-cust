@@ -22,7 +22,6 @@ jobs:
         uses: actions/checkout@v4
 
       # Step 1: Set up JFrog CLI with OIDC
-      # The 'id: jfrog_setup' is crucial for retrieving outputs later.
       - name: Set up JFrog CLI with OIDC
         id: jfrog_setup
         uses: jfrog/setup-jfrog-cli@v4
@@ -32,7 +31,7 @@ jobs:
           oidc-provider-name: ${{ env.OIDC_PROVIDER }}
           oidc-audience: ${{ env.OIDC_AUDIENCE }}
 
-      # --- Publishing a Terraform Module ---
+      # Step 2: Archive Terraform Module
       - name: Archive Terraform Module
         run: |
           MODULE_VERSION=${{ github.ref_name }}
@@ -47,51 +46,50 @@ jobs:
           echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
           ls -la $ZIP_FILE
 
+      # Step 3: Publish Terraform Module to Artifactory
       - name: Publish Terraform Module to Artifactory
         run: |
-          # The JFrog CLI is already authenticated by the OIDC token set up in Step 1
           jf rt u ${{ env.ZIP_FILE }} manu-terra-module/${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws/${{ env.MODULE_VERSION }}/
 
-      # Step 5: Collect environment variables and git details to enrich the build info
+      # Step 4: Publish Build Info
       - name: Publish Build Info
         run: |
-          # Collect environment variables associated with the build
           jf rt build-collect-env
-          # Add git revision and URL to the build info
           jf rt build-add-git
-          # Publish the final build information to Artifactory
           jf rt build-publish
 
-      # Step 6: Create main.tf to test module resolution
-      - name: Print Module URL and Create main.tf for testing
+      # Step 5: Create a basic main.tf for testing module resolution
+      - name: Create main.tf for testing
         run: |
           echo "Module URL: ${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
-          
-          # Create a basic Terraform configuration that uses the module we just published.
           cat <<EOF > main.tf
           module "vpc" {
-            source = "hts2.jfrog.io/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
+            source  = "hts2.jfrog.io/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
+            version = "${{ env.MODULE_VERSION }}"
           }
           EOF
-          echo "Created main.tf for testing:"
+          echo "Created main.tf:"
           cat main.tf
 
-      # Step 7: Setup Terraform CLI on the runner
+      # Step 6: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
-        
-      # Step 8: Configure Terraform Authentication via Environment Variable
-      # This replaces the manual file creation and acts as a "login" for the private host.
-      # Format: TF_TOKEN_<hostname_with_underscores>
+        with:
+          terraform_version: 1.9.8
+
+      # Step 7: Configure Terraform Authentication (automatic private registry login)
       - name: Configure Terraform Authentication
         env:
-          # Token retrieved from JFrog OIDC step (assuming jfrog_access_token output)
-          # 'hts2.jfrog.io' becomes 'TF_TOKEN_HTS2_JFROG_IO'
           TF_TOKEN_HTS2_JFROG_IO: ${{ steps.jfrog_setup.outputs.jfrog_access_token }}
         run: |
-          echo "Terraform authentication token for hts2.jfrog.io configured via TF_TOKEN environment variable."
-          echo "The access token is now available for 'terraform init' in the next step."
+          if [ -z "${{ steps.jfrog_setup.outputs.jfrog_access_token }}" ]; then
+            echo "❌ JFrog OIDC token not received — check jfrog/setup-jfrog-cli outputs."
+            exit 1
+          fi
+          echo "✅ Terraform token configured for hts2.jfrog.io via TF_TOKEN_HTS2_JFROG_IO."
 
-      # Step 9: Initialize Terraform to download providers and modules
-      - name: Terraform Init
-        run: terraform init
+      # Step 8: Initialize and validate Terraform
+      - name: Terraform Init & Validate
+        run: |
+          terraform init -upgrade
+          terraform validate

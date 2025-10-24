@@ -69,12 +69,11 @@ jobs:
           cat <<EOF > main.tf
           module "vpc-aws-main" {
             # Correct format: <HOSTNAME>__<REPO_KEY>/<MODULE_NAME>/<PROVIDER>
-            source  = "hts2.jfrog.io__${REPO_KEY}/${{ env.MODULE_NAME }}/aws"
+            source  = "hts2.jfrog.io__${REPO_KEY}__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
           }
           EOF
           echo "Created main.tf for testing:"
           cat main.tf
-
       # Step 7: Setup Terraform CLI on the runner
    - name: Setup Terraform
      uses: hashicorp/setup-terraform@v2

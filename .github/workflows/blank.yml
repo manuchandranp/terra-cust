@@ -60,6 +60,8 @@ jobs:
           # Publish the final build information to Artifactory
           jf rt build-publish
     # Step 6: Create main.tf to test module resolution
+   - name: Print Module URL
+     run: echo "${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
 
    - name: Create main.tf for testing
 

@@ -61,15 +61,15 @@ jobs:
           jf rt build-publish
       # Step 6: Create main.tf to test module resolution
    # Step 6: Create main.tf to test module resolution
+   # Step 6: Create main.tf to test module resolution
    - name: Create main.tf for testing
      run: |
-          # Use the correct Artifactory Module Registry format:
-          # <HOSTNAME>__<NAMESPACE>/<MODULE-NAME>/<PROVIDER>
-          # Artifactory Repository Key 'manu-terra-module' is OMITTED from the source.
+          # The REPO_KEY must be included as the namespace component.
+          REPO_KEY="manu-terra-module"
           cat <<EOF > main.tf
           module "vpc-aws-main" {
-            source = "hts2.jfrog.io__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
-            # It's best practice to always specify a version
+            # Correct format: <HOSTNAME>__<REPO_KEY>/<MODULE_NAME>/<PROVIDER>
+            source  = "hts2.jfrog.io__${REPO_KEY}/${{ env.MODULE_NAME }}/aws"
             version = "${{ env.MODULE_VERSION }}"
           }
           EOF

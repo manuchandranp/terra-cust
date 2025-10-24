@@ -99,7 +99,7 @@ jobs:
       # Step 8: Configure Terraform to use Artifactory for module resolution
    - name: Configure Terraform for Artifactory
      env:
-          ARTIFACTORY_TOKEN: ${{ steps.setup-cli.outputs.oidc-access-token }}
+          ARTIFACTORY_TOKEN: ${{steps.jfrog_setup.outputs.jfrog-access-token}}
      run: |
            # 1. Create the .terraform.d directory if it doesn't exist (Terraform standard location)
                     mkdir -p ~/.terraform.d

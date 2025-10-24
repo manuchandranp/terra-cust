@@ -71,31 +71,27 @@ jobs:
           echo "Created main.tf:"
           cat main.tf
 
-      # Step 6: Setup Terraform
+            # Step 6: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.9.8
 
-            # Step 7: Retrieve JFrog Access Token and Configure Terraform Authentication
+      # Step 7: Retrieve JFrog Access Token and Configure Terraform Authentication
       - name: Configure Terraform Authentication
         run: |
-          # Extract the JFrog access token from the CLI config
           TOKEN=$(jf c export | grep "access_token" | awk -F'"' '{print $4}')
-
           if [ -z "$TOKEN" ]; then
             echo "❌ Failed to extract JFrog access token from CLI config."
             jf c export
             exit 1
           fi
-
-          # Export the token as Terraform-compatible env var
           echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
           echo "✅ Terraform authentication configured for hts2.jfrog.io"
 
-
-      # Step 8: Initialize and validate Terraform
+      # Step 8: Initialize and Validate Terraform
       - name: Terraform Init & Validate
         run: |
           terraform init -upgrade
           terraform validate
+

@@ -8,7 +8,7 @@ on:
 env:
  OIDC_PROVIDER: 'manu-new'
  OIDC_AUDIENCE: 'newmanu'
- JF_URL: "https://<ART-URL>.jfrog.io"
+ JF_URL: "https://hts2.jfrog.io"
 
 permissions:
  contents: read

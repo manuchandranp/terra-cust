@@ -45,19 +45,16 @@ jobs:
           echo "MODULE_VERSION=$MODULE_VERSION" >> $GITHUB_ENV
           echo "ZIP_FILE=$ZIP_FILE" >> $GITHUB_ENV
           ls -la $ZIP_FILE
-
       # Step 3: Publish Terraform Module to Artifactory
       - name: Publish Terraform Module to Artifactory
         run: |
           jf rt u ${{ env.ZIP_FILE }} manu-terra-module/${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws/${{ env.MODULE_VERSION }}/
-
       # Step 4: Publish Build Info
       - name: Publish Build Info
         run: |
           jf rt build-collect-env
           jf rt build-add-git
           jf rt build-publish
-
       # Step 5: Create a basic main.tf for testing module resolution
       - name: Create main.tf for testing
         run: |
@@ -69,7 +66,6 @@ jobs:
           EOF
           echo "Created main.tf:"
           cat main.tf
-
             # Step 6: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -79,44 +75,24 @@ jobs:
       # Step 7: Retrieve JFrog Access Token and Configure Terraform Authentication
       - name: Configure Terraform Authentication
         run: |
-          echo "🔍 Requesting JFrog access token usable by Terraform registry..."
-
-          # Verify CLI authentication
-          jf rt ping || { echo "❌ JFrog CLI not authenticated"; exit 1; }
-
-          # Try to create a new short-lived access token
-          TOKEN_JSON=$(jf access token-create --description "Terraform OIDC token" --expiry 600 --audience "jfrog-platform" 2>&1 || true)
-
-          echo "🔹 Raw token-create output:"
-          echo "$TOKEN_JSON"
-
-          # Try to extract the token from JSON or fallback plain text
-          TOKEN=$(echo "$TOKEN_JSON" | grep -Eo '"access_token"\s*:\s*"[^"]+"' | head -1 | awk -F'"' '{print $4}')
-
-          # Fallback: if CLI returned a plain token, take that
+          echo "🔍 Exporting and decoding JFrog CLI config..."
+          
+          # Export and decode the Base64 JFrog configuration
+          jf c export > jfconfig.b64
+          base64 -d jfconfig.b64 > jfconfig.json
+          echo "🔹 Decoded JFrog config:"
+          cat jfconfig.json | head -20  # show first few lines for debug
+          # Extract the access token (handles both 'access_token' and 'accessToken')
+          TOKEN=$(cat jfconfig.json | grep -E '"access_token"|"accessToken"' | head -1 | awk -F'"' '{print $4}')
           if [ -z "$TOKEN" ]; then
-            TOKEN=$(echo "$TOKEN_JSON" | grep -Eo 'eyJ[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}')
-          fi
-
-          if [ -z "$TOKEN" ]; then
-            echo "❌ Failed to extract access token from JFrog CLI output."
+            echo "❌ Failed to extract JFrog access token from decoded CLI config."
             exit 1
           fi
-
           echo "✅ Token extracted successfully."
           echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
           echo "✅ Terraform authentication configured for hts2.jfrog.io"
-
-
-          echo "✅ Received JFrog access token for registry use."
-          echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
-
-
-
-
       # Step 8: Initialize and Validate Terraform
       - name: Terraform Init & Validate
         run: |
           terraform init -upgrade
           terraform validate
-

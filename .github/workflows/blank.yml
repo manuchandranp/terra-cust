@@ -80,12 +80,11 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         
-      # Step 8: Configure Terraform to use Artifactory for module resolution
-      # This step correctly retrieves and uses the Access Token for Terraform.
+      # Step 8: Configure Terraform for Artifactory
       - name: Configure Terraform for Artifactory
         env:
-          # RETRIEVING THE TOKEN: Assumes jfrog/setup-jfrog-cli exposes the token as 'jfrog-access-token' output
-          ARTIFACTORY_TOKEN: ${{ steps.jfrog_setup.outputs.jfrog-access-token }}
+          # FIX APPLIED HERE: Using jfrog_access_token (underscore) to retrieve the token
+          ARTIFACTORY_TOKEN: ${{ steps.jfrog_setup.outputs.jfrog_access_token }}
         run: |
           # 1. Create the .terraform.d directory
           mkdir -p ~/.terraform.d

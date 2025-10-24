@@ -23,6 +23,7 @@ jobs:
      uses: actions/checkout@v4
 
    - name: Set up JFrog CLI with OIDC
+     id: jfrog_setup
      uses: jfrog/setup-jfrog-cli@v4
      env:
       JF_URL: ${{ env.JF_URL }}
@@ -59,6 +60,11 @@ jobs:
           jf rt build-add-git
           # Publish the final build information to Artifactory
           jf rt build-publish
+   - name: Use the token in a subsequent step
+     run: |
+          # This line is purely illustrative, assuming 'jfrog-access-token' is the output name
+          # The value will be masked in logs because GitHub Actions handles tokens securely.
+          echo "Token starts with: ${{ steps.jfrog_setup.outputs.jfrog-access-token }}"       
     # Step 6: Create main.tf to test module resolution
    - name: Print Module URL
      run: echo "${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"

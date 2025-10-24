@@ -80,32 +80,17 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         
-      # Step 8: Configure Terraform for Artifactory
-      - name: Configure Terraform for Artifactory
+      # Step 8: Configure Terraform Authentication via Environment Variable
+      # This replaces the manual file creation and acts as a "login" for the private host.
+      # Format: TF_TOKEN_<hostname_with_underscores>
+      - name: Configure Terraform Authentication
         env:
-          # FIX APPLIED HERE: Using jfrog_access_token (underscore) to retrieve the token
-          ARTIFACTORY_TOKEN: ${{ steps.jfrog_setup.outputs.jfrog_access_token }}
+          # Token retrieved from JFrog OIDC step (assuming jfrog_access_token output)
+          # 'hts2.jfrog.io' becomes 'TF_TOKEN_HTS2_JFROG_IO'
+          TF_TOKEN_HTS2_JFROG_IO: ${{ steps.jfrog_setup.outputs.jfrog_access_token }}
         run: |
-          # 1. Create the .terraform.d directory
-          mkdir -p ~/.terraform.d
-          
-          # 2. Define the path to the credentials file
-          CREDENTIALS_FILE="$HOME/.terraform.d/credentials.tfrc.json"
-          
-          # 3. Create the JSON content, injecting the ARTIFACTORY_TOKEN
-          #    NOTE: The hostname (hts2.jfrog.io) must match the module source exactly.
-          cat << EOF > ${CREDENTIALS_FILE}
-              {
-                "credentials": {
-                  "hts2.jfrog.io": {
-                    "token": "$ARTIFACTORY_TOKEN"
-                  }
-                }
-              }
-          EOF
-          
-          cat $HOME/.terraform.d/credentials.tfrc.json
-          echo "Successfully configured Artifactory token in ${CREDENTIALS_FILE}"
+          echo "Terraform authentication token for hts2.jfrog.io configured via TF_TOKEN environment variable."
+          echo "The access token is now available for 'terraform init' in the next step."
 
       # Step 9: Initialize Terraform to download providers and modules
       - name: Terraform Init

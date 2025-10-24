@@ -79,26 +79,23 @@ jobs:
       # Step 7: Retrieve JFrog Access Token and Configure Terraform Authentication
       - name: Configure Terraform Authentication
         run: |
-          echo "🔍 Exporting and decoding JFrog CLI config..."
-          
-          # Export and decode the Base64 JFrog configuration
-          jf c export > jfconfig.b64
-          base64 -d jfconfig.b64 > jfconfig.json
+          echo "🔍 Requesting JFrog Access Token usable by Terraform registry..."
 
-          echo "🔹 Decoded JFrog config:"
-          cat jfconfig.json | head -20  # show first few lines for debug
+          # Ensure JFrog CLI is authenticated (OIDC setup done earlier)
+          jf rt ping
 
-          # Extract the access token (handles both 'access_token' and 'accessToken')
-          TOKEN=$(cat jfconfig.json | grep -E '"access_token"|"accessToken"' | head -1 | awk -F'"' '{print $4}')
+          # Attempt to create a short-lived token for API/registry use
+          TOKEN=$(jf access token-create --description "Terraform token" --expiry 600 --audience "jfrog-platform" --quiet | jq -r '.access_token')
 
           if [ -z "$TOKEN" ]; then
-            echo "❌ Failed to extract JFrog access token from decoded CLI config."
+            echo "❌ Failed to create access token for Terraform registry. Debug JFrog CLI config:"
+            jf c export
             exit 1
           fi
 
-          echo "✅ Token extracted successfully."
+          echo "✅ Received JFrog access token for registry use."
           echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
-          echo "✅ Terraform authentication configured for hts2.jfrog.io"
+
 
 
 

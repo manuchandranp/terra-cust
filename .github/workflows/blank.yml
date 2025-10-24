@@ -79,19 +79,34 @@ jobs:
       # Step 7: Retrieve JFrog Access Token and Configure Terraform Authentication
       - name: Configure Terraform Authentication
         run: |
-          echo "🔍 Requesting JFrog Access Token usable by Terraform registry..."
+          echo "🔍 Requesting JFrog access token usable by Terraform registry..."
 
-          # Ensure JFrog CLI is authenticated (OIDC setup done earlier)
-          jf rt ping
+          # Verify CLI authentication
+          jf rt ping || { echo "❌ JFrog CLI not authenticated"; exit 1; }
 
-          # Attempt to create a short-lived token for API/registry use
-          TOKEN=$(jf access token-create --description "Terraform token" --expiry 600 --audience "jfrog-platform" --quiet | jq -r '.access_token')
+          # Try to create a new short-lived access token
+          TOKEN_JSON=$(jf access token-create --description "Terraform OIDC token" --expiry 600 --audience "jfrog-platform" 2>&1 || true)
+
+          echo "🔹 Raw token-create output:"
+          echo "$TOKEN_JSON"
+
+          # Try to extract the token from JSON or fallback plain text
+          TOKEN=$(echo "$TOKEN_JSON" | grep -Eo '"access_token"\s*:\s*"[^"]+"' | head -1 | awk -F'"' '{print $4}')
+
+          # Fallback: if CLI returned a plain token, take that
+          if [ -z "$TOKEN" ]; then
+            TOKEN=$(echo "$TOKEN_JSON" | grep -Eo 'eyJ[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}')
+          fi
 
           if [ -z "$TOKEN" ]; then
-            echo "❌ Failed to create access token for Terraform registry. Debug JFrog CLI config:"
-            jf c export
+            echo "❌ Failed to extract access token from JFrog CLI output."
             exit 1
           fi
+
+          echo "✅ Token extracted successfully."
+          echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
+          echo "✅ Terraform authentication configured for hts2.jfrog.io"
+
 
           echo "✅ Received JFrog access token for registry use."
           echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV

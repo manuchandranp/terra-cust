@@ -67,7 +67,7 @@ jobs:
           # The source URL must include the /artifactory/ context root for direct downloads.
           cat <<EOF > main.tf
           module "vpc-aws-main" {
-            source = "${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/${{ env.MODULE_VERSION }}/module.zip"
+            source = "${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
           }
           EOF
           echo "Created main.tf for testing:"

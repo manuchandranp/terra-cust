@@ -75,7 +75,7 @@ jobs:
 
           cat <<EOF > main.tf
 
-          module "vpc-aws-main" {
+          module "vpc" {
 
             source = "${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
 

@@ -63,9 +63,8 @@ jobs:
         run: |
           echo "Module URL: ${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
           cat <<EOF > main.tf
-          module "vpc" {
+          module "module-name" {
             source  = "hts2.jfrog.io/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
-            version = "${{ env.MODULE_VERSION }}"
           }
           EOF
           echo "Created main.tf:"

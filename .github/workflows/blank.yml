@@ -91,6 +91,27 @@ jobs:
           echo "✅ Token extracted successfully."
           echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
           echo "✅ Terraform authentication configured for hts2.jfrog.io"
+           # 1. Create the .terraform.d directory if it doesn't exist (Terraform standard location)
+                    mkdir -p ~/.terraform.d
+          
+                     # 2. Define the path to the credentials file
+                     CREDENTIALS_FILE="$HOME/.terraform.d/credentials.tfrc.json"
+          
+                     # 3. Create the JSON content, injecting the ACCESS_TOKEN
+                     #    The 'hts2.jfrog.io' must exactly match the host in your module source.
+                    cat << EOF > ${CREDENTIALS_FILE}
+                        {
+                          "credentials": {
+                             "hts2.jfrog.io": {
+                              "token": "$TOKEN"
+                                                }
+                                               }
+                                           }
+                     EOF
+          
+     
+                     cat $HOME/.terraform.d/credentials.tfrc.json
+                     echo "Successfully configured Artifactory token in ${CREDENTIALS_FILE}"
       # Step 8: Initialize and Validate Terraform
       - name: Terraform Init & Validate
         run: |

@@ -70,7 +70,6 @@ jobs:
           module "vpc-aws-main" {
             # Correct format: <HOSTNAME>__<REPO_KEY>/<MODULE_NAME>/<PROVIDER>
             source  = "hts2.jfrog.io__${REPO_KEY}/${{ env.MODULE_NAME }}/aws"
-            version = "${{ env.MODULE_VERSION }}"
           }
           EOF
           echo "Created main.tf for testing:"

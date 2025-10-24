@@ -60,14 +60,17 @@ jobs:
           # Publish the final build information to Artifactory
           jf rt build-publish
       # Step 6: Create main.tf to test module resolution
+   # Step 6: Create main.tf to test module resolution
    - name: Create main.tf for testing
      run: |
-          # Create a basic Terraform configuration that uses the module we just published.
-          # This allows `terraform init` to test the download from Artifactory.
-          # The source URL must include the /artifactory/ context root for direct downloads.
+          # Use the correct Artifactory Module Registry format:
+          # <HOSTNAME>__<NAMESPACE>/<MODULE-NAME>/<PROVIDER>
+          # Artifactory Repository Key 'manu-terra-module' is OMITTED from the source.
           cat <<EOF > main.tf
           module "vpc-aws-main" {
-            source = "${{ env.JF_URL }}/manu-terra-module__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
+            source = "hts2.jfrog.io__${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws"
+            # It's best practice to always specify a version
+            version = "${{ env.MODULE_VERSION }}"
           }
           EOF
           echo "Created main.tf for testing:"

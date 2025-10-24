@@ -47,7 +47,9 @@ jobs:
 
    - name: Publish Terraform Module to Artifactory
      run: |
-      jf rt u ${{ env.ZIP_FILE }} manu-terra-module/${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws/${{ env.MODULE_VERSION }}  
+      #jf rt u ${{ env.ZIP_FILE }} manu-terra-module/${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws/${{ env.MODULE_VERSION }}
+      jf rt u ${{ env.ZIP_FILE }} manu-terra-module/${{ env.MODULE_NAMESPACE }}/${{ env.MODULE_NAME }}/aws/${{ env.MODULE_VERSION }}/
+
    # Step 5: Collect environment variables and git details to enrich the build info
    - name: Publish Build Info
      run: |

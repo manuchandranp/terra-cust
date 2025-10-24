@@ -80,14 +80,25 @@ jobs:
       # Step 7: Retrieve JFrog Access Token and Configure Terraform Authentication
       - name: Configure Terraform Authentication
         run: |
-          TOKEN=$(jf c export | grep "access_token" | awk -F'"' '{print $4}')
+          echo "🔍 Exporting JFrog CLI config..."
+          # Capture the JFrog CLI configuration JSON safely
+          jf c export > jfconfig.json
+          echo "🔹 Raw JFrog CLI config exported."
+
+          # Extract the access token (works with 'access_token' or 'accessToken')
+          TOKEN=$(cat jfconfig.json | grep -E '"access_token"|"accessToken"' | head -1 | awk -F'"' '{print $4}')
+
           if [ -z "$TOKEN" ]; then
             echo "❌ Failed to extract JFrog access token from CLI config."
-            jf c export
+            echo "🔍 Debugging jfconfig.json output:"
+            cat jfconfig.json
             exit 1
           fi
+
+          # Export the token for Terraform authentication
           echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
           echo "✅ Terraform authentication configured for hts2.jfrog.io"
+
 
       # Step 8: Initialize and Validate Terraform
       - name: Terraform Init & Validate

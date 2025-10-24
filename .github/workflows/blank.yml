@@ -77,16 +77,22 @@ jobs:
         with:
           terraform_version: 1.9.8
 
-      # Step 7: Configure Terraform Authentication (automatic private registry login)
+            # Step 7: Retrieve JFrog Access Token and Configure Terraform Authentication
       - name: Configure Terraform Authentication
-        env:
-          TF_TOKEN_HTS2_JFROG_IO: ${{ steps.jfrog_setup.outputs.jfrog_access_token }}
         run: |
-          if [ -z "${{ steps.jfrog_setup.outputs.jfrog_access_token }}" ]; then
-            echo "❌ JFrog OIDC token not received — check jfrog/setup-jfrog-cli outputs."
+          # Extract the JFrog access token from the CLI config
+          TOKEN=$(jf c export | grep "access_token" | awk -F'"' '{print $4}')
+
+          if [ -z "$TOKEN" ]; then
+            echo "❌ Failed to extract JFrog access token from CLI config."
+            jf c export
             exit 1
           fi
-          echo "✅ Terraform token configured for hts2.jfrog.io via TF_TOKEN_HTS2_JFROG_IO."
+
+          # Export the token as Terraform-compatible env var
+          echo "TF_TOKEN_HTS2_JFROG_IO=$TOKEN" >> $GITHUB_ENV
+          echo "✅ Terraform authentication configured for hts2.jfrog.io"
+
 
       # Step 8: Initialize and validate Terraform
       - name: Terraform Init & Validate

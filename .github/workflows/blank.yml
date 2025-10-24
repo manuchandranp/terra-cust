@@ -66,7 +66,7 @@ jobs:
           # This allows `terraform init` to test the download from Artifactory.
           # The source URL must include the /artifactory/ context root for direct downloads.
           cat <<EOF > main.tf
-          module "test_module" {
+          module "vpc-aws-main" {
             source = "${{ env.JF_URL }}/artifactory/${{ env.TF_REPO }}/${{ env.MODULE_NAME }}/${{ env.MODULE_VERSION }}/module.zip"
           }
           EOF
